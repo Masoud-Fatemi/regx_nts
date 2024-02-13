@@ -13,16 +13,16 @@ import time
 from datetime import datetime
 
 # Global variables
-MAIN_DIR = 'data/'  # Update this to your main directory path
+
+MAIN_DIR = 'PATH_TO_MAIN_DIR'
 OUTPUT_DIR = 'output/'
 
 PATTERN  = r'speedrunned'
-PATTERN = r'.*ve\sspeedrunned'
-PATTERN = r'.*ve\sspeedrun'
-PATTERN = r'.*ve\sspeedran'
-PATTERN = r'ragequitted'
-PATTERN = r'.*ve\sragequit'
-
+# PATTERN = r'.*ve\sspeedrunned'
+# PATTERN = r'.*ve\sspeedrun'
+# PATTERN = r'.*ve\sspeedran'
+# PATTERN = r'ragequitted'
+# PATTERN = r'.*ve\sragequit'
 
 def read_json_file(file_path):
     """Read a JSON file and return its content, skipping lines with errors."""

@@ -1,88 +1,96 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 13 17:11:36 2024
+Created on Tue Feb 13 22:21:47 2024
 
 @author: Masou
-
- - related to "Kimmo-Ilari Juntunen", a studet who asked for data (check uef email for more info)
- - results for each of patterns in a separate csv file with the tweet text, date, country, 
-     network size and language as the metadata
-
 """
+
 import os
 import json
 import re
 import pandas as pd
 import time
-start = time.time()
+from datetime import datetime
 
-def read_json_list(path):
+# Global variables
+MAIN_DIR = 'data/'  # Update this to your main directory path
+OUTPUT_DIR = 'output/'
+
+PATTERN  = r'speedrunned'
+PATTERN = r'.*ve\sspeedrunned'
+PATTERN = r'.*ve\sspeedrun'
+PATTERN = r'.*ve\sspeedran'
+PATTERN = r'ragequitted'
+PATTERN = r'.*ve\sragequit'
+
+
+def read_json_file(file_path):
+    """Read a JSON file and return its content, skipping lines with errors."""
     data = []
-    with open(path, 'r') as file:
-        for line in file.readlines():
-            data.append(json.loads(line))
+    with open(file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            try:
+                data.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass  # Skip lines that cause JSON decoding errors
     return data
 
-def clean_time(datetime):
-    # Split the string to remove the milliseconds and 'Z'
-    datetime = datetime.split('.')[0]  # Removes the milliseconds
-    # Replace 'T' with a space to separate date and time
-    datetime = datetime.replace('T', ' ')
-    return datetime
+def format_datetime(datetime_str):
+    """Format the datetime string to remove milliseconds and 'Z'."""
+    return datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d %H:%M:%S")
 
-save = True
-input_dir = 'data/'
-output_dir = 'output/'
+def find_tweets_matching_pattern(tweets, pattern):
+    """Find and return tweets matching the given pattern."""
+    return [tweet for tweet in tweets if re.search(pattern, tweet['text'])]
 
-pattern  = r'speedrunned'
-# pattern = r'.*ve\sspeedrunned'
-# pattern = r'.*ve\sspeedrun'
-# pattern = r'.*ve\sspeedran'
-# pattern = r'ragequitted'
-# pattern = r'.*ve\sragequit'
-
-tweet_ids = list()
-tweet_text, date = list(), list()
-country, network = list(), list()
-language = list()
-
-
-#to get all the json files in a directory
-json_files = [file for file in os.listdir(input_dir) if file.endswith('.json')]
-
-for json_file in json_files:
-    
-    tweets = read_json_list(input_dir+json_file)
-
-    for tweet in tweets:
-        
-        text = tweet['text']
-        
-        # Find all matches of the pattern in the text
-        matches = re.findall(pattern, text)
-        # Count the number of matches
-        count = len(matches)
-        
-        if count > 0:
-            for i in range(count):
-                tweet_ids.append(tweet['id'])
-                tweet_text.append(text)
-                date.append(clean_time(tweet['created_at']))
-                country.append(tweet['geo']['country_code'])
-                network.append(tweet['author']['public_metrics']['following_count'])
-                language.append(tweet['lang'])
-                
-results = {
-    'ID':tweet_ids,
-    'Text': tweet_text,
-    'Date': date,
-    'Country': country,
-    'Network': network,
-    'language': language
+def extract_tweet_metadata(tweets):
+    """Extract metadata from tweets."""
+    metadata = {
+        'ID': [],
+        'Text': [],
+        'Date': [],
+        'Country': [],
+        'Network': [],
+        'Language': []
     }
-df = pd.DataFrame(results)
+    for tweet in tweets:
+        if 'geo' in tweet:
+            metadata['ID'].append(tweet['id'])
+            metadata['Text'].append(tweet['text'])
+            metadata['Date'].append(format_datetime(tweet['created_at']))
+            metadata['Country'].append(tweet['geo']['country_code'])
+            metadata['Network'].append(tweet['author']['public_metrics']['following_count'])
+            metadata['Language'].append(tweet['lang'])
+    return metadata
 
-if save:
-    df.to_excel(output_dir + pattern + '.xlsx', index=False, engine='openpyxl')
+def save_to_excel(data, pattern, output_dir):
+    """Save the extracted data to an Excel file."""
+    df = pd.DataFrame(data)
+    filename = os.path.join(output_dir, f"{pattern}.xlsx")
+    df.to_excel(filename, index=False, engine='openpyxl')
+
+def main(main_dir, output_dir, pattern):
+    start_time = time.time()
     
-print(round((time.time()-start)/60, 0))
+    all_tweets_metadata = {'ID': [], 'Text': [], 'Date': [], 'Country': [], 'Network': [], 'Language': []}
+    
+    for root, dirs, files in os.walk(main_dir):
+        json_files = [os.path.join(root, file) for file in files if file.endswith('.json')]
+        for json_file in json_files:
+            tweets = read_json_file(json_file)
+            matching_tweets = find_tweets_matching_pattern(tweets, pattern)
+            if matching_tweets:
+                tweet_metadata = extract_tweet_metadata(matching_tweets)
+                for key in all_tweets_metadata:
+                    all_tweets_metadata[key].extend(tweet_metadata[key])
+    
+    if all_tweets_metadata['ID']:  # Check if there are any matching tweets
+        save_to_excel(all_tweets_metadata, pattern, output_dir)
+    
+    elapsed_time_minutes = (time.time() - start_time) / 60
+    print(f"Pattern searched: {pattern}")
+    print(f"Time taken: {elapsed_time_minutes:.2f} minutes")
+
+if __name__ == "__main__":
+    main(MAIN_DIR, OUTPUT_DIR, PATTERN)
+

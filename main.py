@@ -8,6 +8,8 @@ Created on Tue Feb 13 22:21:47 2024
  - A student (Kimmo-Ilari Juntunen) as for data, for more info check the uef email
  - results for each of these in a separate csv file with the tweet text, date, country, network size 
      and language as the metadata
+ - RUN: update the MAIN_DIR with the main data directory and make and folder named "output" in the
+     code directroy.
 
 """
 
@@ -20,8 +22,8 @@ from datetime import datetime
 
 # Global variables
 
-# MAIN_DIR = 'PATH_TO_MAIN_DIR'
-MAIN_DIR = 'data/'
+# MAIN_DIR = 'data/'
+MAIN_DIR = 'PATH_TO_MAIN_DIR'
 OUTPUT_DIR = 'output/'
 
 PATTERN  = r'speedrunned'

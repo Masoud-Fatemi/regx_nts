@@ -20,7 +20,8 @@ from datetime import datetime
 
 # Global variables
 
-MAIN_DIR = 'PATH_TO_MAIN_DIR'
+# MAIN_DIR = 'PATH_TO_MAIN_DIR'
+MAIN_DIR = 'data/'
 OUTPUT_DIR = 'output/'
 
 PATTERN  = r'speedrunned'
@@ -81,6 +82,7 @@ def main(main_dir, output_dir, pattern):
     all_tweets_metadata = {'ID': [], 'Text': [], 'Date': [], 'Country': [], 'Network': [], 'Language': []}
     
     for root, dirs, files in os.walk(main_dir):
+        print(f"Current dir: {root}")
         json_files = [os.path.join(root, file) for file in files if file.endswith('.json')]
         for json_file in json_files:
             tweets = read_json_file(json_file)
@@ -90,11 +92,11 @@ def main(main_dir, output_dir, pattern):
                 for key in all_tweets_metadata:
                     all_tweets_metadata[key].extend(tweet_metadata[key])
     
-    if all_tweets_metadata['ID']:  # Check if there are any matching tweets
-        save_to_excel(all_tweets_metadata, pattern, output_dir)
+    # if all_tweets_metadata['ID']:  # Check if there are any matching tweets
+    save_to_excel(all_tweets_metadata, pattern, output_dir)
     
     elapsed_time_minutes = (time.time() - start_time) / 60
-    print(f"Pattern searched: {pattern}")
+    print(f"\nPattern searched: {pattern}")
     print(f"Time taken: {elapsed_time_minutes:.2f} minutes")
 
 if __name__ == "__main__":
